@@ -1,0 +1,65 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PaymentPeriod } from './payment-period.entity';
+import { ServiceTemplatesService } from '../service-templates/service-templates.service';
+import type { CreatePeriodDto } from './dto/create-period.dto';
+import type { User } from '../users/user.entity';
+
+@Injectable()
+export class PeriodsService {
+  constructor(
+    @InjectRepository(PaymentPeriod)
+    private readonly repo: Repository<PaymentPeriod>,
+    private readonly templatesService: ServiceTemplatesService,
+  ) {}
+
+  findAll(user: User): Promise<PaymentPeriod[]> {
+    return this.repo.find({
+      where: { user: { id: user.id } },
+      order: { periodDate: 'DESC' },
+      relations: ['entries'],
+    });
+  }
+
+  async findOne(id: string, user: User): Promise<PaymentPeriod> {
+    const period = await this.repo.findOne({
+      where: { id, user: { id: user.id } },
+      relations: ['entries'],
+    });
+    if (!period) throw new NotFoundException('Período no encontrado');
+    return period;
+  }
+
+  async create(dto: CreatePeriodDto, user: User): Promise<PaymentPeriod> {
+    const period = this.repo.create({ ...dto, user });
+    return this.repo.save(period);
+  }
+
+  async cloneFromTemplates(id: string, user: User): Promise<PaymentPeriod> {
+    const period = await this.findOne(id, user);
+    const templates = await this.templatesService.findActive();
+
+    const entries = templates.map((t, i) => ({
+      serviceName: t.name,
+      category: t.category,
+      serviceTemplateId: t.id,
+      status: 'pending',
+      sortOrder: t.sortOrder || i,
+    }));
+
+    period.entries = entries as any;
+    return this.repo.save(period);
+  }
+
+  async update(id: string, dto: Partial<CreatePeriodDto>, user: User): Promise<PaymentPeriod> {
+    const period = await this.findOne(id, user);
+    Object.assign(period, dto);
+    return this.repo.save(period);
+  }
+
+  async remove(id: string, user: User): Promise<void> {
+    const period = await this.findOne(id, user);
+    await this.repo.remove(period);
+  }
+}
