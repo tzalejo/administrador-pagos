@@ -1,26 +1,19 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type ServiceTemplate } from '@/lib/api';
-import { getCategoryLabel, cn } from '@/lib/utils';
-
-const CATEGORIES = [
-  { value: '', label: 'Sin categoría' },
-  { value: 'credit_card', label: 'Tarjeta de crédito' },
-  { value: 'insurance', label: 'Seguro' },
-  { value: 'utilities', label: 'Servicios' },
-  { value: 'taxes', label: 'Impuestos' },
-  { value: 'rent', label: 'Alquiler' },
-  { value: 'personal', label: 'Personal' },
-  { value: 'investment', label: 'Inversión' },
-  { value: 'other', label: 'Otros' },
-];
+import { cn } from '@/lib/utils';
 
 export function SettingsPage() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [editId, setEditId] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
   const qc = useQueryClient();
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: api.categories.list,
+  });
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['templates'],
@@ -29,9 +22,9 @@ export function SettingsPage() {
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      editId
-        ? api.templates.update(editId, { name, category: category || undefined })
-        : api.templates.create({ name, category: category || undefined, isRecurring: true }),
+      editId != null
+        ? api.templates.update(editId, { name, categoryId: categoryId ?? null })
+        : api.templates.create({ name, categoryId: categoryId ?? null, isRecurring: true }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['templates'] });
       resetForm();
@@ -51,7 +44,7 @@ export function SettingsPage() {
   function startEdit(t: ServiceTemplate) {
     setEditId(t.id);
     setName(t.name);
-    setCategory(t.category ?? '');
+    setCategoryId(t.category?.id ?? null);
     setShowForm(true);
   }
 
@@ -59,7 +52,7 @@ export function SettingsPage() {
     setShowForm(false);
     setEditId(null);
     setName('');
-    setCategory('');
+    setCategoryId(null);
   }
 
   return (
@@ -95,12 +88,13 @@ export function SettingsPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm text-slate-300">Categoría</label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={categoryId ?? ''}
+                onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
                 className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                <option value="">Sin categoría</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
             </div>
@@ -139,7 +133,7 @@ export function SettingsPage() {
                       {t.name}
                     </p>
                     {t.category && (
-                      <p className="text-xs text-slate-400">{getCategoryLabel(t.category)}</p>
+                      <p className="text-xs text-slate-400">{t.category.label}</p>
                     )}
                   </div>
                 </div>
