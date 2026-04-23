@@ -11,6 +11,8 @@ import { User } from './users/user.entity';
 import { ServiceTemplate } from './service-templates/service-template.entity';
 import { PaymentPeriod } from './periods/payment-period.entity';
 import { PaymentEntry } from './payment-entries/payment-entry.entity';
+import { Category } from './categories/category.entity';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -22,12 +24,13 @@ import { PaymentEntry } from './payment-entries/payment-entry.entity';
       username: process.env.DB_USER ?? 'pagos_user',
       password: process.env.DB_PASS ?? 'pagos_pass',
       database: process.env.DB_NAME ?? 'pagos_db',
-      entities: [User, ServiceTemplate, PaymentPeriod, PaymentEntry],
+      entities: [User, ServiceTemplate, PaymentPeriod, PaymentEntry, Category],
       synchronize: true,
       autoLoadEntities: true,
     }),
     AuthModule,
     UsersModule,
+    CategoriesModule,
     ServiceTemplatesModule,
     PeriodsModule,
     PaymentEntriesModule,
