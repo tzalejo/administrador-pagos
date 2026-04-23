@@ -1,26 +1,14 @@
-import {
-  IsDateString,
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { IsDateString, IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 
 const STATUSES = ['paid', 'pending', 'no_charge', 'partial'] as const;
 
 export class CreateEntryDto {
-  @IsString()
-  @MinLength(1)
-  serviceName: string;
+  @IsNumber()
+  serviceTemplateId: number;
 
   @IsOptional()
-  @IsString()
-  serviceTemplateId?: string;
-
-  @IsOptional()
-  @IsString()
-  category?: string;
+  @IsNumber()
+  categoryId?: number | null;
 
   @IsOptional()
   @IsNumber()

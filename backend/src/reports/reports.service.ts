@@ -19,7 +19,7 @@ export class ReportsService {
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.entries', 'e')
       .where('p.user = :userId', { userId: user.id })
-      .andWhere('EXTRACT(YEAR FROM p.periodDate::date) = :year', { year })
+      .andWhere('EXTRACT(YEAR FROM p."periodDate"::date) = :year', { year })
       .orderBy('p.periodDate', 'ASC')
       .getMany();
 
@@ -73,8 +73,9 @@ export class ReportsService {
     const periods = await this.periodRepo
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.entries', 'e')
+      .leftJoinAndSelect('e.category', 'c')
       .where('p.user = :userId', { userId: user.id })
-      .andWhere('EXTRACT(YEAR FROM p.periodDate::date) = :year', { year })
+      .andWhere('EXTRACT(YEAR FROM p."periodDate"::date) = :year', { year })
       .getMany();
 
     const totals: Record<string, number> = {};
@@ -82,7 +83,7 @@ export class ReportsService {
     for (const period of periods) {
       for (const entry of period.entries) {
         if (entry.status === 'no_charge' || !entry.category) continue;
-        const key = entry.category;
+        const key = entry.category.name;
         totals[key] = (totals[key] ?? 0) + Number(entry.amountArs ?? 0);
       }
     }

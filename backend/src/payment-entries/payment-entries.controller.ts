@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PaymentEntriesService } from './payment-entries.service';
@@ -19,19 +10,17 @@ import type { User } from '../users/user.entity';
 export class PaymentEntriesController {
   constructor(private readonly service: PaymentEntriesService) {}
 
-  @Get('periods/:periodId/entries')
-  findByPeriod(@Param('periodId') periodId: string) {
-    return this.service.findByPeriod(periodId);
-  }
-
   @Post('periods/:periodId/entries')
-  create(@Param('periodId') periodId: string, @Body() dto: CreateEntryDto) {
+  create(
+    @Param('periodId', ParseIntPipe) periodId: number,
+    @Body() dto: CreateEntryDto,
+  ) {
     return this.service.create(periodId, dto);
   }
 
   @Patch('entries/:id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: Partial<CreateEntryDto>,
     @CurrentUser() user: User,
   ) {
@@ -39,7 +28,7 @@ export class PaymentEntriesController {
   }
 
   @Delete('entries/:id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
   }
 }

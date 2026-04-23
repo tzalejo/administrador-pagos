@@ -7,23 +7,22 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { PaymentPeriod } from '../periods/payment-period.entity';
+import { Category } from '../categories/category.entity';
+import { ServiceTemplate } from '../service-templates/service-template.entity';
 
 @Entity('payment_entries')
 export class PaymentEntry {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @ManyToOne(() => PaymentPeriod, (period) => period.entries, { onDelete: 'CASCADE' })
   period: PaymentPeriod;
 
-  @Column({ nullable: true })
-  serviceTemplateId: string;
+  @ManyToOne(() => ServiceTemplate, { nullable: false, eager: true, onDelete: 'RESTRICT' })
+  serviceTemplate: ServiceTemplate;
 
-  @Column()
-  serviceName: string;
-
-  @Column({ nullable: true })
-  category: string;
+  @ManyToOne(() => Category, { nullable: true, eager: true, onDelete: 'SET NULL' })
+  category: Category | null;
 
   @Column({ type: 'decimal', precision: 14, scale: 2, nullable: true })
   amountArs: number | null;

@@ -18,14 +18,14 @@ export class PeriodsService {
     return this.repo.find({
       where: { user: { id: user.id } },
       order: { periodDate: 'DESC' },
-      relations: ['entries'],
+      relations: ['entries', 'entries.serviceTemplate'],
     });
   }
 
-  async findOne(id: string, user: User): Promise<PaymentPeriod> {
+  async findOne(id: number, user: User): Promise<PaymentPeriod> {
     const period = await this.repo.findOne({
       where: { id, user: { id: user.id } },
-      relations: ['entries'],
+      relations: ['entries', 'entries.category', 'entries.serviceTemplate'],
     });
     if (!period) throw new NotFoundException('Período no encontrado');
     return period;
@@ -36,29 +36,28 @@ export class PeriodsService {
     return this.repo.save(period);
   }
 
-  async cloneFromTemplates(id: string, user: User): Promise<PaymentPeriod> {
+  async cloneFromTemplates(id: number, user: User): Promise<PaymentPeriod> {
     const period = await this.findOne(id, user);
     const templates = await this.templatesService.findActive();
 
     const entries = templates.map((t, i) => ({
-      serviceName: t.name,
-      category: t.category,
-      serviceTemplateId: t.id,
+      serviceTemplate: { id: t.id },
+      category: t.category ?? null,
       status: 'pending',
-      sortOrder: t.sortOrder || i,
+      sortOrder: t.sortOrder ?? i,
     }));
 
     period.entries = entries as any;
     return this.repo.save(period);
   }
 
-  async update(id: string, dto: Partial<CreatePeriodDto>, user: User): Promise<PaymentPeriod> {
+  async update(id: number, dto: Partial<CreatePeriodDto>, user: User): Promise<PaymentPeriod> {
     const period = await this.findOne(id, user);
     Object.assign(period, dto);
     return this.repo.save(period);
   }
 
-  async remove(id: string, user: User): Promise<void> {
+  async remove(id: number, user: User): Promise<void> {
     const period = await this.findOne(id, user);
     await this.repo.remove(period);
   }

@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PeriodsService } from './periods.service';
@@ -25,7 +16,7 @@ export class PeriodsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
     return this.service.findOne(id, user);
   }
 
@@ -35,13 +26,13 @@ export class PeriodsController {
   }
 
   @Post(':id/clone-templates')
-  cloneFromTemplates(@Param('id') id: string, @CurrentUser() user: User) {
+  cloneFromTemplates(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
     return this.service.cloneFromTemplates(id, user);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: Partial<CreatePeriodDto>,
     @CurrentUser() user: User,
   ) {
@@ -49,7 +40,7 @@ export class PeriodsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: User) {
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
     return this.service.remove(id, user);
   }
 }

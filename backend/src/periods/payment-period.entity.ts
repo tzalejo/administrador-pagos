@@ -12,8 +12,8 @@ import { PaymentEntry } from '../payment-entries/payment-entry.entity';
 
 @Entity('payment_periods')
 export class PaymentPeriod {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
