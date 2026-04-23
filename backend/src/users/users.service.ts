@@ -15,7 +15,7 @@ export class UsersService {
     return this.repo.findOne({ where: { email } });
   }
 
-  findById(id: string): Promise<User | null> {
+  findById(id: number): Promise<User | null> {
     return this.repo.findOne({ where: { id } });
   }
 
