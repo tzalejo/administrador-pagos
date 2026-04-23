@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api, type PaymentEntry } from '@/lib/api';
 import { parseArgentineNumber } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Props {
   periodId: string;
@@ -19,6 +24,16 @@ const PAYMENT_METHODS = [
   { value: 'efectivo', label: 'Efectivo' },
   { value: 'otro', label: 'Otro' },
 ];
+
+const STATUSES = [
+  { value: 'pending', label: 'Pendiente' },
+  { value: 'paid', label: 'Pagado' },
+  { value: 'no_charge', label: 'Sin cargo (-)' },
+  { value: 'partial', label: 'Parcial' },
+];
+
+const SELECT_CLS =
+  'flex h-9 w-full rounded-md border border-input bg-input px-3 py-1 text-sm text-foreground shadow-xs transition-colors focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]';
 
 export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
   const isEdit = !!entry;
@@ -71,20 +86,19 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/80">
-      <div className="bg-slate-800 border border-slate-700 rounded-t-2xl md:rounded-xl w-full md:max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700 sticky top-0 bg-slate-800">
-          <h2 className="font-semibold text-white">{isEdit ? 'Editar servicio' : 'Agregar servicio'}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white text-lg">✕</button>
-        </div>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? 'Editar servicio' : 'Agregar servicio'}</DialogTitle>
+        </DialogHeader>
 
-        <div className="p-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 pt-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-slate-300">Servicio *</label>
+            <Label>Servicio *</Label>
             <select
               value={serviceTemplateId ?? ''}
               onChange={(e) => applyTemplate(e.target.value)}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+              className={SELECT_CLS}
             >
               <option value="">Seleccionar servicio...</option>
               {templates.map((t) => (
@@ -95,21 +109,19 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Monto ARS</label>
-              <input
+              <Label>Monto ARS</Label>
+              <Input
                 value={amountArsRaw}
                 onChange={(e) => setAmountArsRaw(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
                 placeholder="0,00"
                 inputMode="decimal"
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Monto USD</label>
-              <input
+              <Label>Monto USD</Label>
+              <Input
                 value={amountUsdRaw}
                 onChange={(e) => setAmountUsdRaw(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
                 placeholder="0.00"
                 inputMode="decimal"
               />
@@ -117,36 +129,26 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-slate-300">Estado</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-            >
-              <option value="pending">Pendiente</option>
-              <option value="paid">Pagado</option>
-              <option value="no_charge">Sin cargo (-)</option>
-              <option value="partial">Parcial</option>
+            <Label>Estado</Label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={SELECT_CLS}>
+              {STATUSES.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Vencimiento</label>
-              <input
+              <Label>Vencimiento</Label>
+              <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Medio de pago</label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-              >
+              <Label>Medio de pago</Label>
+              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className={SELECT_CLS}>
                 {PAYMENT_METHODS.map((m) => (
                   <option key={m.value} value={m.value}>{m.label}</option>
                 ))}
@@ -155,11 +157,11 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-slate-300">Categoría</label>
+            <Label>Categoría</Label>
             <select
               value={categoryId ?? ''}
               onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+              className={SELECT_CLS}
             >
               <option value="">Sin categoría</option>
               {categories.map((c) => (
@@ -169,39 +171,36 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-slate-300">Notas</label>
-            <textarea
+            <Label>Notas</Label>
+            <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
               placeholder="Detalles adicionales..."
+              className="resize-none"
             />
           </div>
 
           {mutation.isError && (
-            <p className="text-red-400 text-sm">
+            <p className="text-destructive text-sm border border-destructive/30 bg-destructive/10 rounded-md px-3 py-2">
               {mutation.error instanceof Error ? mutation.error.message : 'Error al guardar'}
             </p>
           )}
 
           <div className="flex gap-3 pt-1">
-            <button
+            <Button
               onClick={() => mutation.mutate()}
               disabled={!serviceTemplateId || mutation.isPending}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
+              className="flex-1"
             >
               {mutation.isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Agregar'}
-            </button>
-            <button
-              onClick={onClose}
-              className="px-4 text-slate-400 hover:text-white rounded-lg text-sm transition-colors"
-            >
+            </Button>
+            <Button variant="ghost" onClick={onClose}>
               Cancelar
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

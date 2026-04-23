@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type ServiceTemplate } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 export function SettingsPage() {
   const [showForm, setShowForm] = useState(false);
@@ -59,38 +64,38 @@ export function SettingsPage() {
     <div className="flex flex-col gap-6 max-w-2xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Configuración</h1>
-          <p className="text-slate-400 text-sm mt-1">Servicios predefinidos para nuevos períodos</p>
+          <h1 className="text-2xl font-bold text-foreground">Configuración</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Servicios predefinidos para nuevos períodos
+          </p>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
+        <Button onClick={() => { resetForm(); setShowForm(true); }}>
           + Agregar
-        </button>
+        </Button>
       </div>
 
       {showForm && (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 p-5">
-          <h2 className="font-semibold text-white mb-4">
-            {editId ? 'Editar servicio' : 'Nuevo servicio'}
-          </h2>
-          <div className="flex flex-col gap-4">
+        <Card className="glow-border">
+          <CardHeader>
+            <CardTitle className="text-base">
+              {editId ? 'Editar servicio' : 'Nuevo servicio'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Nombre *</label>
-              <input
+              <Label>Nombre *</Label>
+              <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
                 placeholder="ej: naranja, seguro..."
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Categoría</label>
+              <Label>Categoría</Label>
               <select
                 value={categoryId ?? ''}
                 onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                className="flex h-9 w-full rounded-md border border-input bg-input px-3 py-1 text-sm text-foreground shadow-xs transition-colors focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               >
                 <option value="">Sin categoría</option>
                 {categories.map((c) => (
@@ -99,70 +104,86 @@ export function SettingsPage() {
               </select>
             </div>
             <div className="flex gap-3">
-              <button
+              <Button
                 onClick={() => saveMutation.mutate()}
                 disabled={!name || saveMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 {saveMutation.isPending ? 'Guardando...' : 'Guardar'}
-              </button>
-              <button
-                onClick={resetForm}
-                className="text-slate-400 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
+              </Button>
+              <Button variant="ghost" onClick={resetForm}>
                 Cancelar
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {isLoading ? (
-        <div className="text-slate-400">Cargando...</div>
+        <div className="text-muted-foreground">Cargando...</div>
       ) : (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-          <div className="divide-y divide-slate-700">
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b border-border pb-4">
+            <CardTitle className="text-base">Servicios ({templates.length})</CardTitle>
+            <CardDescription>
+              Los servicios activos se agregan automáticamente a cada período nuevo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 divide-y divide-border">
             {templates.map((t) => (
-              <div key={t.id} className="flex items-center justify-between px-4 py-3">
+              <div key={t.id} className="flex items-center justify-between px-6 py-3 hover:bg-secondary/20 transition-colors">
                 <div className="flex items-center gap-3">
                   <div
-                    className={cn('w-2 h-2 rounded-full', t.isActive ? 'bg-green-400' : 'bg-slate-600')}
+                    className={cn(
+                      'w-1.5 h-1.5 rounded-full shrink-0',
+                      t.isActive ? 'bg-primary glow-sm' : 'bg-muted-foreground/40',
+                    )}
                   />
                   <div>
-                    <p className={cn('text-sm font-medium', t.isActive ? 'text-white' : 'text-slate-500')}>
+                    <p className={cn('text-sm font-medium', t.isActive ? 'text-foreground' : 'text-muted-foreground')}>
                       {t.name}
                     </p>
                     {t.category && (
-                      <p className="text-xs text-slate-400">{t.category.label}</p>
+                      <p className="text-xs text-muted-foreground">{t.category.label}</p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
+                  {!t.isActive && (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                      Inactivo
+                    </Badge>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs h-7 px-2"
                     onClick={() => toggleMutation.mutate(t)}
-                    className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 transition-colors"
                   >
                     {t.isActive ? 'Desactivar' : 'Activar'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs h-7 px-2"
                     onClick={() => startEdit(t)}
-                    className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 transition-colors"
                   >
                     Editar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={() => {
                       if (confirm(`¿Eliminar "${t.name}"?`)) deleteMutation.mutate(t.id);
                     }}
-                    className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded bg-red-900/20 hover:bg-red-900/40 transition-colors"
                   >
                     Eliminar
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

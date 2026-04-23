@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { formatARS, formatDate, formatPeriodLabel } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 export function PeriodsPage() {
   const [showForm, setShowForm] = useState(false);
@@ -22,9 +27,7 @@ export function PeriodsPage() {
         periodDate: date,
         label: label || formatPeriodLabel(date),
       });
-      if (withTemplates) {
-        await api.periods.cloneTemplates(period.id);
-      }
+      if (withTemplates) await api.periods.cloneTemplates(String(period.id));
       return period;
     },
     onSuccess: () => {
@@ -36,79 +39,71 @@ export function PeriodsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: api.periods.remove,
+    mutationFn: (id: number) => api.periods.remove(String(id)),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['periods'] }),
   });
 
-  if (isLoading) return <div className="text-slate-400">Cargando...</div>;
+  if (isLoading) return <div className="text-muted-foreground">Cargando...</div>;
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Períodos</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          + Nuevo período
-        </button>
+        <h1 className="text-2xl font-bold text-foreground">Períodos</h1>
+        <Button onClick={() => setShowForm(!showForm)}>+ Nuevo período</Button>
       </div>
 
       {showForm && (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 p-5">
-          <h2 className="font-semibold text-white mb-4">Nuevo período</h2>
-          <div className="flex flex-col gap-4">
+        <Card className="glow-border">
+          <CardHeader>
+            <CardTitle className="text-base">Nuevo período</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Fecha del período *</label>
-              <input
+              <Label>Fecha del período *</Label>
+              <Input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Etiqueta (opcional)</label>
-              <input
-                type="text"
+              <Label>Etiqueta (opcional)</Label>
+              <Input
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="ej: Marzo 2026"
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={withTemplates}
                 onChange={(e) => setWithTemplates(e.target.checked)}
-                className="rounded"
+                className="rounded accent-primary"
               />
               Cargar servicios predefinidos automáticamente
             </label>
             <div className="flex gap-3">
-              <button
+              <Button
                 onClick={() => createMutation.mutate()}
                 disabled={!date || createMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 {createMutation.isPending ? 'Creando...' : 'Crear período'}
-              </button>
-              <button
-                onClick={() => setShowForm(false)}
-                className="text-slate-400 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
+              </Button>
+              <Button variant="ghost" onClick={() => setShowForm(false)}>
                 Cancelar
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {periods.length === 0 ? (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 p-8 text-center">
-          <p className="text-slate-400">No hay períodos registrados.</p>
-        </div>
+        <Card className="text-center py-8">
+          <CardContent>
+            <p className="text-muted-foreground">No hay períodos registrados.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="flex flex-col gap-3">
           {periods.map((period) => {
@@ -119,48 +114,51 @@ export function PeriodsPage() {
             const paid = period.entries.filter((e) => e.status === 'paid').length;
 
             return (
-              <div
-                key={period.id}
-                className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden"
-              >
+              <Card key={period.id} className="overflow-hidden hover:glow-sm transition-all">
                 <Link
                   to={`/periods/${period.id}`}
-                  className="flex items-start justify-between p-4 hover:bg-slate-700/30 transition-colors"
+                  className="flex items-start justify-between p-5 hover:bg-secondary/30 transition-colors"
                 >
-                  <div>
-                    <p className="font-semibold text-white">
+                  <div className="flex flex-col gap-1">
+                    <p className="font-semibold text-foreground">
                       {period.label || formatPeriodLabel(period.periodDate)}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground">
                       {formatDate(period.periodDate)} · {period.entries.length} servicios
                     </p>
-                    <div className="flex gap-3 mt-1.5">
+                    <div className="flex gap-2 mt-1">
                       {paid > 0 && (
-                        <span className="text-xs text-green-400">{paid} pagados</span>
+                        <Badge variant="outline" className="text-[10px] border-green-500/40 text-green-400">
+                          {paid} pagados
+                        </Badge>
                       )}
                       {pending > 0 && (
-                        <span className="text-xs text-yellow-400">{pending} pendientes</span>
+                        <Badge variant="outline" className="text-[10px] border-yellow-500/40 text-yellow-400">
+                          {pending} pendientes
+                        </Badge>
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-white">{formatARS(totalArs)}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">ARS</p>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-semibold text-foreground">{formatARS(totalArs)}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">ARS</p>
                   </div>
                 </Link>
-                <div className="border-t border-slate-700 px-4 py-2 flex justify-end">
-                  <button
+                <div className="border-t border-border px-5 py-2 flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive text-xs"
                     onClick={() => {
                       if (confirm('¿Eliminar este período y todos sus pagos?')) {
                         deleteMutation.mutate(period.id);
                       }
                     }}
-                    className="text-xs text-red-400 hover:text-red-300 transition-colors"
                   >
                     Eliminar
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
