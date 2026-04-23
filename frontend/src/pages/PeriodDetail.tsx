@@ -19,13 +19,13 @@ export function PeriodDetailPage() {
   });
 
   const updateEntryMutation = useMutation({
-    mutationFn: ({ entryId, data }: { entryId: string; data: Partial<PaymentEntry> }) =>
+    mutationFn: ({ entryId, data }: { entryId: number; data: { status: string } }) =>
       api.entries.update(entryId, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['period', id] }),
   });
 
   const deleteEntryMutation = useMutation({
-    mutationFn: api.entries.remove,
+    mutationFn: (entryId: number) => api.entries.remove(entryId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['period', id] }),
   });
 
@@ -50,6 +50,7 @@ export function PeriodDetailPage() {
   function quickStatus(entry: PaymentEntry, status: string) {
     updateEntryMutation.mutate({ entryId: entry.id, data: { status } });
   }
+
 
   return (
     <div className="flex flex-col gap-5 max-w-3xl">
@@ -115,7 +116,7 @@ export function PeriodDetailPage() {
         ) : (
           <div className="divide-y divide-slate-700">
             {filtered
-              .sort((a, b) => a.sortOrder - b.sortOrder || a.serviceName.localeCompare(b.serviceName))
+              .sort((a, b) => a.sortOrder - b.sortOrder || a.serviceTemplate.name.localeCompare(b.serviceTemplate.name))
               .map((entry) => {
                 const status = getStatusConfig(entry.status);
                 return (
@@ -123,7 +124,7 @@ export function PeriodDetailPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-medium text-white truncate">{entry.serviceName}</p>
+                          <p className="text-sm font-medium text-white truncate">{entry.serviceTemplate.name}</p>
                           <span className={cn('text-xs px-2 py-0.5 rounded-full', status.bg, status.color)}>
                             {status.label}
                           </span>
@@ -174,6 +175,7 @@ export function PeriodDetailPage() {
                             if (confirm('¿Eliminar este servicio?')) {
                               deleteEntryMutation.mutate(entry.id);
                             }
+
                           }}
                           className="text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 px-2 py-1 rounded transition-colors"
                         >

@@ -27,20 +27,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   auth: {
     login: (email: string, password: string) =>
-      request<{ access_token: string; user: { id: string; email: string; name: string } }>(
+      request<{ access_token: string; user: { id: number; email: string; name: string } }>(
         '/auth/login',
         { method: 'POST', body: JSON.stringify({ email, password }) },
       ),
-    me: () => request<{ id: string; email: string; name: string }>('/auth/me'),
+    me: () => request<{ id: number; email: string; name: string }>('/auth/me'),
+  },
+
+  categories: {
+    list: () => request<Category[]>('/categories'),
   },
 
   templates: {
     list: () => request<ServiceTemplate[]>('/service-templates'),
-    create: (data: Partial<ServiceTemplate>) =>
+    create: (data: CreateTemplatePayload) =>
       request<ServiceTemplate>('/service-templates', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: Partial<ServiceTemplate>) =>
+    update: (id: number, data: Partial<CreateTemplatePayload>) =>
       request<ServiceTemplate>(`/service-templates/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-    remove: (id: string) => request<void>(`/service-templates/${id}`, { method: 'DELETE' }),
+    remove: (id: number) => request<void>(`/service-templates/${id}`, { method: 'DELETE' }),
   },
 
   periods: {
@@ -56,15 +60,14 @@ export const api = {
   },
 
   entries: {
-    list: (periodId: string) => request<PaymentEntry[]>(`/periods/${periodId}/entries`),
-    create: (periodId: string, data: Partial<PaymentEntry>) =>
+    create: (periodId: string, data: CreateEntryPayload) =>
       request<PaymentEntry>(`/periods/${periodId}/entries`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    update: (id: string, data: Partial<PaymentEntry>) =>
+    update: (id: number, data: Partial<CreateEntryPayload>) =>
       request<PaymentEntry>(`/entries/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-    remove: (id: string) => request<void>(`/entries/${id}`, { method: 'DELETE' }),
+    remove: (id: number) => request<void>(`/entries/${id}`, { method: 'DELETE' }),
   },
 
   reports: {
@@ -76,17 +79,31 @@ export const api = {
   },
 };
 
-export interface ServiceTemplate {
-  id: string;
+export interface Category {
+  id: number;
   name: string;
-  category: string;
+  label: string;
+}
+
+export interface ServiceTemplate {
+  id: number;
+  name: string;
+  category: Category | null;
   isRecurring: boolean;
   isActive: boolean;
   sortOrder: number;
 }
 
+export interface CreateTemplatePayload {
+  name?: string;
+  categoryId?: number | null;
+  isRecurring?: boolean;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
 export interface Period {
-  id: string;
+  id: number;
   periodDate: string;
   label: string;
   notes: string;
@@ -95,10 +112,9 @@ export interface Period {
 }
 
 export interface PaymentEntry {
-  id: string;
-  serviceName: string;
-  serviceTemplateId: string;
-  category: string;
+  id: number;
+  serviceTemplate: ServiceTemplate;
+  category: Category | null;
   amountArs: number | null;
   amountUsd: number | null;
   paymentMethod: string;
@@ -108,8 +124,20 @@ export interface PaymentEntry {
   sortOrder: number;
 }
 
+export interface CreateEntryPayload {
+  serviceTemplateId: number;
+  categoryId?: number | null;
+  amountArs?: number | null;
+  amountUsd?: number | null;
+  paymentMethod?: string;
+  dueDate?: string | null;
+  status?: string;
+  notes?: string;
+  sortOrder?: number;
+}
+
 export interface YearlySummaryItem {
-  periodId: string;
+  periodId: number;
   periodDate: string;
   label: string;
   totalArs: number;
@@ -120,7 +148,7 @@ export interface YearlySummaryItem {
 }
 
 export interface ServiceHistoryItem {
-  periodId: string;
+  periodId: number;
   periodDate: string;
   label: string;
   amountArs: number | null;

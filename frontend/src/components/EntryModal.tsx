@@ -20,22 +20,10 @@ const PAYMENT_METHODS = [
   { value: 'otro', label: 'Otro' },
 ];
 
-const CATEGORIES = [
-  { value: '', label: 'Sin categoría' },
-  { value: 'credit_card', label: 'Tarjeta de crédito' },
-  { value: 'insurance', label: 'Seguro' },
-  { value: 'utilities', label: 'Servicios' },
-  { value: 'taxes', label: 'Impuestos' },
-  { value: 'rent', label: 'Alquiler' },
-  { value: 'personal', label: 'Personal' },
-  { value: 'investment', label: 'Inversión' },
-  { value: 'other', label: 'Otros' },
-];
-
 export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
   const isEdit = !!entry;
 
-  const [serviceName, setServiceName] = useState(entry?.serviceName ?? '');
+  const [serviceTemplateId, setServiceTemplateId] = useState<number | null>(entry?.serviceTemplate?.id ?? null);
   const [amountArsRaw, setAmountArsRaw] = useState(
     entry?.amountArs != null ? String(entry.amountArs) : '',
   );
@@ -46,8 +34,12 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
   const [dueDate, setDueDate] = useState(entry?.dueDate ?? '');
   const [status, setStatus] = useState(entry?.status ?? 'pending');
   const [notes, setNotes] = useState(entry?.notes ?? '');
-  const [category, setCategory] = useState(entry?.category ?? '');
-  const [useTemplate, setUseTemplate] = useState(false);
+  const [categoryId, setCategoryId] = useState<number | null>(entry?.category?.id ?? null);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: api.categories.list,
+  });
 
   const { data: templates = [] } = useQuery({
     queryKey: ['templates'],
@@ -57,8 +49,8 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
   const mutation = useMutation({
     mutationFn: () => {
       const data = {
-        serviceName,
-        category: category || undefined,
+        serviceTemplateId: serviceTemplateId!,
+        categoryId: categoryId ?? null,
         amountArs: parseArgentineNumber(amountArsRaw),
         amountUsd: parseArgentineNumber(amountUsdRaw),
         paymentMethod: paymentMethod || undefined,
@@ -72,11 +64,10 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
   });
 
   function applyTemplate(templateId: string) {
-    const t = templates.find((t) => t.id === templateId);
+    const t = templates.find((t) => String(t.id) === templateId);
     if (!t) return;
-    setServiceName(t.name);
-    setCategory(t.category ?? '');
-    setUseTemplate(false);
+    setServiceTemplateId(t.id);
+    setCategoryId(t.category?.id ?? null);
   }
 
   return (
@@ -88,30 +79,18 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
         </div>
 
         <div className="p-4 flex flex-col gap-4">
-          {!isEdit && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-slate-300">Usar servicio predefinido</label>
-              <select
-                onChange={(e) => applyTemplate(e.target.value)}
-                defaultValue=""
-                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-              >
-                <option value="">Seleccionar...</option>
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-slate-300">Nombre del servicio *</label>
-            <input
-              value={serviceName}
-              onChange={(e) => setServiceName(e.target.value)}
+            <label className="text-sm text-slate-300">Servicio *</label>
+            <select
+              value={serviceTemplateId ?? ''}
+              onChange={(e) => applyTemplate(e.target.value)}
               className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-              placeholder="ej: naranja, seguro, alquiler..."
-            />
+            >
+              <option value="">Seleccionar servicio...</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -178,12 +157,13 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm text-slate-300">Categoría</label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={categoryId ?? ''}
+              onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
               className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
             >
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
+              <option value="">Sin categoría</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
           </div>
@@ -208,7 +188,7 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           <div className="flex gap-3 pt-1">
             <button
               onClick={() => mutation.mutate()}
-              disabled={!serviceName || mutation.isPending}
+              disabled={!serviceTemplateId || mutation.isPending}
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
             >
               {mutation.isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Agregar'}
