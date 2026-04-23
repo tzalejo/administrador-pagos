@@ -6,8 +6,8 @@ export class CreateServiceTemplateDto {
   name: string;
 
   @IsOptional()
-  @IsString()
-  category?: string;
+  @IsNumber()
+  categoryId?: number | null;
 
   @IsOptional()
   @IsBoolean()

@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { ServiceTemplatesService } from './service-templates.service';
 import { CreateServiceTemplateDto } from './dto/create-service-template.dto';
@@ -28,12 +19,12 @@ export class ServiceTemplatesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: Partial<CreateServiceTemplateDto>) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: Partial<CreateServiceTemplateDto>) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
   }
 }
