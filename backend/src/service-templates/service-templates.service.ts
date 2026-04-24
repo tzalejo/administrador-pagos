@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { ServiceTemplate } from './service-template.entity';
 import { CategoriesService } from '../categories/categories.service';
 import type { CreateServiceTemplateDto } from './dto/create-service-template.dto';
@@ -51,12 +51,15 @@ export class ServiceTemplatesService implements OnModuleInit {
   }
 
   findAll(): Promise<ServiceTemplate[]> {
-    return this.repo.find({ order: { sortOrder: 'ASC', name: 'ASC' } });
+    return this.repo.find({
+      where: { deletedAt: IsNull() },
+      order: { sortOrder: 'ASC', name: 'ASC' },
+    });
   }
 
   findActive(): Promise<ServiceTemplate[]> {
     return this.repo.find({
-      where: { isActive: true },
+      where: { isActive: true, deletedAt: IsNull() },
       order: { sortOrder: 'ASC', name: 'ASC' },
     });
   }
@@ -84,8 +87,9 @@ export class ServiceTemplatesService implements OnModuleInit {
   }
 
   async remove(id: number): Promise<void> {
-    const template = await this.repo.findOne({ where: { id } });
+    const template = await this.repo.findOne({ where: { id, deletedAt: IsNull() } });
     if (!template) throw new NotFoundException('Servicio no encontrado');
-    await this.repo.remove(template);
+    template.deletedAt = new Date();
+    await this.repo.save(template);
   }
 }

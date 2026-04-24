@@ -28,6 +28,9 @@ export class ServiceTemplate {
   @Column({ default: 0 })
   sortOrder: number;
 
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  deletedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
