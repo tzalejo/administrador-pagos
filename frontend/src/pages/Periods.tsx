@@ -2,19 +2,24 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { formatARS, formatDate, formatPeriodLabel } from '@/lib/utils';
+import { formatARS, formatPeriodLabel } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 
+const NOW = new Date();
+
 export function PeriodsPage() {
   const [showForm, setShowForm] = useState(false);
-  const [date, setDate] = useState('');
-  const [label, setLabel] = useState('');
+  const [month, setMonth] = useState(NOW.getMonth() + 1);
+  const [year, setYear] = useState(NOW.getFullYear());
   const [withTemplates, setWithTemplates] = useState(true);
   const qc = useQueryClient();
+
+  const periodDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const periodLabel = formatPeriodLabel(periodDate);
 
   const { data: periods = [], isLoading } = useQuery({
     queryKey: ['periods'],
@@ -23,20 +28,17 @@ export function PeriodsPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const period = await api.periods.create({
-        periodDate: date,
-        label: label || formatPeriodLabel(date),
-      });
+      const period = await api.periods.create({ periodDate });
       if (withTemplates) await api.periods.cloneTemplates(String(period.id));
       return period;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['periods'] });
       setShowForm(false);
-      setDate('');
-      setLabel('');
     },
   });
+
+  const createError = createMutation.error?.message ?? null;
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.periods.remove(String(id)),
@@ -59,20 +61,29 @@ export function PeriodsPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label>Fecha del período *</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>Etiqueta (opcional)</Label>
-              <Input
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="ej: Marzo 2026"
-              />
+              <Label className="text-xs">Período</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={month}
+                  onChange={(e) => setMonth(Math.min(12, Math.max(1, Number(e.target.value))))}
+                  className="w-20 text-center"
+                  placeholder="MM"
+                />
+                <span className="text-muted-foreground">/</span>
+                <Input
+                  type="number"
+                  min={2000}
+                  max={2100}
+                  value={year}
+                  onChange={(e) => setYear(Number(e.target.value))}
+                  className="w-24 text-center"
+                  placeholder="AAAA"
+                />
+                <span className="text-sm text-primary font-medium">{periodLabel}</span>
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
               <input
@@ -83,10 +94,13 @@ export function PeriodsPage() {
               />
               Cargar servicios predefinidos automáticamente
             </label>
+            {createError && (
+              <p className="text-xs text-destructive">{createError}</p>
+            )}
             <div className="flex gap-3">
               <Button
                 onClick={() => createMutation.mutate()}
-                disabled={!date || createMutation.isPending}
+                disabled={!month || !year || createMutation.isPending}
               >
                 {createMutation.isPending ? 'Creando...' : 'Crear período'}
               </Button>
@@ -121,10 +135,10 @@ export function PeriodsPage() {
                 >
                   <div className="flex flex-col gap-1">
                     <p className="font-semibold text-foreground">
-                      {period.label || formatPeriodLabel(period.periodDate)}
+                      {formatPeriodLabel(period.periodDate)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(period.periodDate)} · {period.entries.length} servicios
+                      {period.entries.length} servicios
                     </p>
                     <div className="flex gap-2 mt-1">
                       {paid > 0 && (

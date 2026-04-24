@@ -184,7 +184,7 @@ export function ReportsPage() {
             <tbody className="divide-y divide-border">
               {yearly.map((p) => (
                 <tr key={p.periodId} className="hover:bg-secondary/30 transition-colors">
-                  <td className="px-6 py-3 text-foreground">{p.label || formatPeriodLabel(p.periodDate)}</td>
+                  <td className="px-6 py-3 text-foreground">{formatPeriodLabel(p.periodDate)}</td>
                   <td className="px-6 py-3 text-right text-foreground">{formatARS(p.totalArs)}</td>
                   <td className="px-6 py-3 text-right text-primary">{p.totalUsd > 0 ? formatUSD(p.totalUsd) : '-'}</td>
                   <td className="px-6 py-3 text-right text-green-400">{p.paidCount}</td>

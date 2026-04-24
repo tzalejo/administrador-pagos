@@ -50,7 +50,7 @@ export const api = {
   periods: {
     list: () => request<Period[]>('/periods'),
     get: (id: string) => request<Period>(`/periods/${id}`),
-    create: (data: { periodDate: string; label?: string; notes?: string }) =>
+    create: (data: { periodDate: string; notes?: string }) =>
       request<Period>('/periods', { method: 'POST', body: JSON.stringify(data) }),
     cloneTemplates: (id: string) =>
       request<Period>(`/periods/${id}/clone-templates`, { method: 'POST' }),
@@ -105,7 +105,6 @@ export interface CreateTemplatePayload {
 export interface Period {
   id: number;
   periodDate: string;
-  label: string;
   notes: string;
   entries: PaymentEntry[];
   createdAt: string;
@@ -139,7 +138,6 @@ export interface CreateEntryPayload {
 export interface YearlySummaryItem {
   periodId: number;
   periodDate: string;
-  label: string;
   totalArs: number;
   totalUsd: number;
   pendingCount: number;
@@ -150,7 +148,6 @@ export interface YearlySummaryItem {
 export interface ServiceHistoryItem {
   periodId: number;
   periodDate: string;
-  label: string;
   amountArs: number | null;
   amountUsd: number | null;
   status: string;

@@ -132,7 +132,7 @@ export function DashboardPage() {
                     >
                       <div>
                         <p className="text-sm text-foreground font-medium">
-                          {period.label || formatPeriodLabel(period.periodDate)}
+                          {formatPeriodLabel(period.periodDate)}
                         </p>
                         <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
                           {period.entries.length} servicios

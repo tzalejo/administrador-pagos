@@ -31,7 +31,8 @@ export function formatDate(dateStr: string): string {
 
 export function formatPeriodLabel(dateStr: string): string {
   const date = new Date(dateStr + 'T12:00:00');
-  return date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  const month = date.toLocaleDateString('es-AR', { month: 'long' });
+  return `${month.charAt(0).toUpperCase() + month.slice(1)} ${date.getFullYear()}`;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {

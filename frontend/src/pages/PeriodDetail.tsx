@@ -96,9 +96,8 @@ export function PeriodDetailPage() {
               ← Períodos
             </Link>
             <h1 className="text-lg font-bold text-foreground leading-tight">
-              {period.label || formatPeriodLabel(period.periodDate)}
+              {formatPeriodLabel(period.periodDate)}
             </h1>
-            <p className="text-xs text-muted-foreground">{formatDate(period.periodDate)}</p>
           </div>
           <Button size="sm" onClick={() => setShowAddModal(true)} className="shrink-0">
             + Agregar

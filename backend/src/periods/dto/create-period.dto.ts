@@ -6,9 +6,5 @@ export class CreatePeriodDto {
 
   @IsOptional()
   @IsString()
-  label?: string;
-
-  @IsOptional()
-  @IsString()
   notes?: string;
 }

@@ -38,7 +38,6 @@ export class ReportsService {
       return {
         periodId: p.id,
         periodDate: p.periodDate,
-        label: p.label,
         totalArs,
         totalUsd,
         pendingCount,
@@ -52,15 +51,15 @@ export class ReportsService {
     const entries = await this.entryRepo
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.period', 'p')
+      .leftJoinAndSelect('e.serviceTemplate', 'st')
       .where('p.user = :userId', { userId: user.id })
-      .andWhere('LOWER(e.serviceName) = LOWER(:name)', { name: serviceName })
+      .andWhere('LOWER(st.name) = LOWER(:name)', { name: serviceName })
       .orderBy('p.periodDate', 'ASC')
       .getMany();
 
     return entries.map((e) => ({
       periodId: e.period.id,
       periodDate: e.period.periodDate,
-      label: e.period.label,
       amountArs: e.amountArs,
       amountUsd: e.amountUsd,
       status: e.status,
