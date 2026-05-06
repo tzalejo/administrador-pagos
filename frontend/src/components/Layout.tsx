@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useShortcut } from '@/lib/shortcuts';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: '⊞' },
-  { to: '/periods', label: 'Períodos', icon: '◫' },
-  { to: '/reports', label: 'Reportes', icon: '▦' },
-  { to: '/settings', label: 'Configuración', icon: '◈' },
+  { to: '/dashboard', label: 'Dashboard', icon: '⊞', shortcut: 'd' },
+  { to: '/periods', label: 'Períodos', icon: '◫', shortcut: 'p' },
+  { to: '/reports', label: 'Reportes', icon: '▦', shortcut: 'r' },
+  { to: '/settings', label: 'Configuración', icon: '◈', shortcut: 'c' },
 ];
 
 export function Layout() {
@@ -16,11 +17,18 @@ export function Layout() {
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   function handleLogout() {
     logout();
     navigate('/login');
   }
+
+  useShortcut('d', () => { if (pathname !== '/dashboard') navigate('/dashboard'); });
+  useShortcut('p', () => { if (!pathname.startsWith('/periods')) navigate('/periods'); });
+  useShortcut('r', () => { if (pathname !== '/reports') navigate('/reports'); });
+  useShortcut('c', () => { if (pathname !== '/settings') navigate('/settings'); });
+  useShortcut('l', handleLogout);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -45,7 +53,7 @@ export function Layout() {
               }
             >
               <span className="text-base">{item.icon}</span>
-              {item.label}
+              <span className="flex-1"><span className="underline underline-offset-2">{item.label[0]}</span>{item.label.slice(1)}</span>
             </NavLink>
           ))}
         </nav>
@@ -57,6 +65,9 @@ export function Layout() {
             className="w-full justify-start text-muted-foreground hover:text-destructive"
           >
             Cerrar sesión
+            <kbd className="ml-auto inline-flex items-center rounded border border-current/20 px-1 font-sans text-[10px] opacity-40 leading-none">
+              l
+            </kbd>
           </Button>
         </div>
       </aside>
@@ -95,7 +106,7 @@ export function Layout() {
                   }
                 >
                   <span>{item.icon}</span>
-                  {item.label}
+                  <span className="flex-1"><span className="underline underline-offset-2">{item.label[0]}</span>{item.label.slice(1)}</span>
                 </NavLink>
               ))}
             </nav>

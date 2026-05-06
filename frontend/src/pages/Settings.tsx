@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type ServiceTemplate } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ShortcutBtn } from '@/components/ui/shortcut-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,17 @@ export function SettingsPage() {
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
   const qc = useQueryClient();
+
+  const nameRef = useRef<HTMLInputElement>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
+  const saveRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (showForm) {
+      const id = setTimeout(() => nameRef.current?.focus(), 50);
+      return () => clearTimeout(id);
+    }
+  }, [showForm]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -75,9 +87,9 @@ export function SettingsPage() {
               Servicios predefinidos para nuevos períodos
             </p>
           </div>
-          <Button size="sm" onClick={() => { resetForm(); setShowForm(true); }}>
+          <ShortcutBtn size="sm" shortcut="a" onClick={() => { resetForm(); setShowForm(true); }}>
             + Agregar
-          </Button>
+          </ShortcutBtn>
         </div>
 
         {showForm && (
@@ -92,17 +104,31 @@ export function SettingsPage() {
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Nombre *</Label>
                   <Input
+                    ref={nameRef}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="ej: naranja, seguro..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        selectRef.current?.focus();
+                      }
+                    }}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Categoría</Label>
                   <select
+                    ref={selectRef}
                     value={categoryId ?? ''}
                     onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
                     className={SELECT_CLS}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        try { (e.currentTarget as any).showPicker(); } catch { /* */ }
+                      }
+                    }}
                   >
                     <option value="">Sin categoría</option>
                     {categories.map((c) => (
@@ -112,16 +138,18 @@ export function SettingsPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button
+                <ShortcutBtn
+                  ref={saveRef}
+                  shortcut="g"
                   size="sm"
                   onClick={() => saveMutation.mutate()}
                   disabled={!name || saveMutation.isPending}
                 >
                   {saveMutation.isPending ? 'Guardando...' : 'Guardar'}
-                </Button>
-                <Button size="sm" variant="ghost" onClick={resetForm}>
+                </ShortcutBtn>
+                <ShortcutBtn shortcut="c" size="sm" variant="ghost" onClick={resetForm}>
                   Cancelar
-                </Button>
+                </ShortcutBtn>
               </div>
             </CardContent>
           </Card>

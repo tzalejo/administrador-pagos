@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { formatARS, formatPeriodLabel } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ShortcutBtn } from '@/components/ui/shortcut-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +52,7 @@ export function PeriodsPage() {
     <div className="flex flex-col gap-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Períodos</h1>
-        <Button onClick={() => setShowForm(!showForm)}>+ Nuevo período</Button>
+        <ShortcutBtn shortcut="n" onClick={() => setShowForm(!showForm)}>+ Nuevo período</ShortcutBtn>
       </div>
 
       {showForm && (
@@ -98,15 +99,16 @@ export function PeriodsPage() {
               <p className="text-xs text-destructive">{createError}</p>
             )}
             <div className="flex gap-3">
-              <Button
+              <ShortcutBtn
+                shortcut="g"
                 onClick={() => createMutation.mutate()}
                 disabled={!month || !year || createMutation.isPending}
               >
                 {createMutation.isPending ? 'Creando...' : 'Crear período'}
-              </Button>
-              <Button variant="ghost" onClick={() => setShowForm(false)}>
+              </ShortcutBtn>
+              <ShortcutBtn shortcut="c" variant="ghost" onClick={() => setShowForm(false)}>
                 Cancelar
-              </Button>
+              </ShortcutBtn>
             </div>
           </CardContent>
         </Card>

@@ -6,7 +6,9 @@ import { formatARS, formatUSD, formatDate, formatPeriodLabel, getStatusConfig, c
 import { EntryModal } from '@/components/EntryModal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ShortcutBtn } from '@/components/ui/shortcut-button';
 import { Badge } from '@/components/ui/badge';
+import { useShortcut } from '@/lib/shortcuts';
 
 const STATUS_BADGE: Record<string, string> = {
   paid: 'border-green-500/40 text-green-400 bg-green-500/10',
@@ -23,6 +25,19 @@ const FILTER_LABELS: Record<string, string> = {
   no_charge: 'Sin cargo',
   partial: 'Parcial',
 };
+const FILTER_SHORTCUTS: Record<string, string> = {
+  all: 't',
+  pending: 'e',
+  paid: 'g',
+  no_charge: 's',
+  partial: 'i',
+};
+
+function labelWithShortcut(text: string, letter: string) {
+  const idx = text.toLowerCase().indexOf(letter.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return <>{text.slice(0, idx)}<span className="underline underline-offset-2">{text[idx]}</span>{text.slice(idx + 1)}</>;
+}
 
 export function PeriodDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +45,13 @@ export function PeriodDetailPage() {
   const [editingEntry, setEditingEntry] = useState<PaymentEntry | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+
+  useShortcut('a', () => setShowAddModal(true));
+  useShortcut('t', () => setFilterStatus('all'));
+  useShortcut('e', () => setFilterStatus('pending'));
+  useShortcut('g', () => setFilterStatus('paid'));
+  useShortcut('s', () => setFilterStatus('no_charge'));
+  useShortcut('i', () => setFilterStatus('partial'));
 
   const { data: period, isLoading } = useQuery({
     queryKey: ['period', id],
@@ -99,9 +121,9 @@ export function PeriodDetailPage() {
               {formatPeriodLabel(period.periodDate)}
             </h1>
           </div>
-          <Button size="sm" onClick={() => setShowAddModal(true)} className="shrink-0">
+          <ShortcutBtn size="sm" shortcut="a" onClick={() => setShowAddModal(true)} className="shrink-0">
             + Agregar
-          </Button>
+          </ShortcutBtn>
         </div>
 
         {/* Summary — compact stat row */}
@@ -152,7 +174,7 @@ export function PeriodDetailPage() {
                     : 'bg-secondary text-muted-foreground border-transparent hover:border-border',
                 )}
               >
-                {FILTER_LABELS[s]}
+                {labelWithShortcut(FILTER_LABELS[s], FILTER_SHORTCUTS[s])}
                 {count > 0 && (
                   <span className={cn(
                     'rounded-full px-1 text-[9px] font-bold',

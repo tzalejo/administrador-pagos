@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api, type PaymentEntry } from '@/lib/api';
 import { parseArgentineNumber } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { ShortcutBtn } from '@/components/ui/shortcut-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,6 +51,16 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
   const [notes, setNotes] = useState(entry?.notes ?? '');
   const [categoryId, setCategoryId] = useState<number | null>(entry?.category?.id ?? null);
 
+  const serviceRef = useRef<HTMLSelectElement>(null);
+  const amountArsRef = useRef<HTMLInputElement>(null);
+  const amountUsdRef = useRef<HTMLInputElement>(null);
+  const statusRef = useRef<HTMLSelectElement>(null);
+  const dueDateRef = useRef<HTMLInputElement>(null);
+  const paymentMethodRef = useRef<HTMLSelectElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+  const saveWrapperRef = useRef<HTMLDivElement>(null);
+
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: api.categories.list,
@@ -87,7 +97,10 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-lg max-h-[90vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => { e.preventDefault(); serviceRef.current?.focus(); }}
+      >
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Editar servicio' : 'Agregar servicio'}</DialogTitle>
         </DialogHeader>
@@ -96,9 +109,16 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           <div className="flex flex-col gap-1.5">
             <Label>Servicio *</Label>
             <select
+              ref={serviceRef}
               value={serviceTemplateId ?? ''}
               onChange={(e) => applyTemplate(e.target.value)}
               className={SELECT_CLS}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  try { (e.currentTarget as any).showPicker(); } catch { /* */ }
+                }
+              }}
             >
               <option value="">Seleccionar servicio...</option>
               {templates.map((t) => (
@@ -111,26 +131,41 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
             <div className="flex flex-col gap-1.5">
               <Label>Monto ARS</Label>
               <Input
+                ref={amountArsRef}
                 value={amountArsRaw}
                 onChange={(e) => setAmountArsRaw(e.target.value)}
                 placeholder="0,00"
                 inputMode="decimal"
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); amountUsdRef.current?.focus(); } }}
               />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Monto USD</Label>
               <Input
+                ref={amountUsdRef}
                 value={amountUsdRaw}
                 onChange={(e) => setAmountUsdRaw(e.target.value)}
                 placeholder="0.00"
                 inputMode="decimal"
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); statusRef.current?.focus(); } }}
               />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <Label>Estado</Label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className={SELECT_CLS}>
+            <select
+              ref={statusRef}
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className={SELECT_CLS}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  try { (e.currentTarget as any).showPicker(); } catch { /* */ }
+                }
+              }}
+            >
               {STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
@@ -141,14 +176,27 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
             <div className="flex flex-col gap-1.5">
               <Label>Vencimiento</Label>
               <Input
+                ref={dueDateRef}
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); paymentMethodRef.current?.focus(); } }}
               />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Medio de pago</Label>
-              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className={SELECT_CLS}>
+              <select
+                ref={paymentMethodRef}
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className={SELECT_CLS}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    try { (e.currentTarget as any).showPicker(); } catch { /* */ }
+                  }
+                }}
+              >
                 {PAYMENT_METHODS.map((m) => (
                   <option key={m.value} value={m.value}>{m.label}</option>
                 ))}
@@ -159,9 +207,16 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           <div className="flex flex-col gap-1.5">
             <Label>Categoría</Label>
             <select
+              ref={categoryRef}
               value={categoryId ?? ''}
               onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
               className={SELECT_CLS}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  try { (e.currentTarget as any).showPicker(); } catch { /* */ }
+                }
+              }}
             >
               <option value="">Sin categoría</option>
               {categories.map((c) => (
@@ -173,11 +228,18 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           <div className="flex flex-col gap-1.5">
             <Label>Notas</Label>
             <Textarea
+              ref={notesRef}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
               placeholder="Detalles adicionales..."
               className="resize-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  saveWrapperRef.current?.querySelector('button')?.focus();
+                }
+              }}
             />
           </div>
 
@@ -188,16 +250,19 @@ export function EntryModal({ periodId, entry, onClose, onSaved }: Props) {
           )}
 
           <div className="flex gap-3 pt-1">
-            <Button
-              onClick={() => mutation.mutate()}
-              disabled={!serviceTemplateId || mutation.isPending}
-              className="flex-1"
-            >
-              {mutation.isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Agregar'}
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
+            <div ref={saveWrapperRef} className="flex-1">
+              <ShortcutBtn
+                shortcut="g"
+                onClick={() => mutation.mutate()}
+                disabled={!serviceTemplateId || mutation.isPending}
+                className="w-full"
+              >
+                {mutation.isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Agregar'}
+              </ShortcutBtn>
+            </div>
+            <ShortcutBtn shortcut="c" variant="ghost" onClick={onClose}>
               Cancelar
-            </Button>
+            </ShortcutBtn>
           </div>
         </div>
       </DialogContent>
