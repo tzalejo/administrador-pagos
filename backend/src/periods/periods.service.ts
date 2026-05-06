@@ -65,6 +65,18 @@ export class PeriodsService {
 
   async remove(id: number, user: User): Promise<void> {
     const period = await this.findOne(id, user);
-    await this.repo.remove(period);
+    const hasUserData = period.entries.some(
+      (e) =>
+        e.amountArs != null ||
+        e.amountUsd != null ||
+        e.paymentMethod != null ||
+        (e.notes != null && e.notes !== '') ||
+        e.status !== 'pending',
+    );
+    if (hasUserData) {
+      await this.repo.softDelete(period.id);
+    } else {
+      await this.repo.remove(period);
+    }
   }
 }

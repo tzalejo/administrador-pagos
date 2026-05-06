@@ -1,18 +1,17 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { PaymentEntry } from '../payment-entries/payment-entry.entity';
 
 @Entity('payment_periods')
-@Unique(['user', 'periodDate'])
 export class PaymentPeriod {
   @PrimaryGeneratedColumn()
   id: number;
@@ -34,4 +33,7 @@ export class PaymentPeriod {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn({ nullable: true })
+  deletedAt: Date | null;
 }
