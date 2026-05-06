@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ShortcutBtn } from '@/components/ui/shortcut-button';
 import { Badge } from '@/components/ui/badge';
 import { useShortcut } from '@/lib/shortcuts';
+import type { Period } from '@/lib/api';
 
 const STATUS_BADGE: Record<string, string> = {
   paid: 'border-green-500/40 text-green-400 bg-green-500/10',
@@ -33,6 +34,32 @@ const FILTER_SHORTCUTS: Record<string, string> = {
   partial: 'i',
 };
 
+function buildCopyText(period: Period): string {
+  const SEP = '─'.repeat(48);
+  const allEntries = (period.entries ?? []).sort(
+    (a, b) => a.sortOrder - b.sortOrder || a.serviceTemplate.name.localeCompare(b.serviceTemplate.name),
+  );
+
+  const lines: string[] = [
+    `Período: ${formatPeriodLabel(period.periodDate)}`,
+    SEP,
+  ];
+
+  for (const e of allEntries) {
+    const parts: string[] = [e.serviceTemplate.name];
+    if (e.amountArs != null) parts.push(formatARS(Number(e.amountArs)));
+    if (e.amountUsd != null) parts.push(formatUSD(Number(e.amountUsd)));
+    parts.push(getStatusConfig(e.status).label);
+    if (e.dueDate) {
+      const [y, m, d] = e.dueDate.split('-');
+      parts.push(`Vto: ${d}/${m}/${y.slice(2)}`);
+    }
+    lines.push(parts.join('\t'));
+  }
+
+  return lines.join('\n');
+}
+
 function labelWithShortcut(text: string, letter: string) {
   const idx = text.toLowerCase().indexOf(letter.toLowerCase());
   if (idx === -1) return <>{text}</>;
@@ -45,6 +72,7 @@ export function PeriodDetailPage() {
   const [editingEntry, setEditingEntry] = useState<PaymentEntry | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [copied, setCopied] = useState(false);
 
   useShortcut('a', () => setShowAddModal(true));
   useShortcut('t', () => setFilterStatus('all'));
@@ -121,9 +149,31 @@ export function PeriodDetailPage() {
               {formatPeriodLabel(period.periodDate)}
             </h1>
           </div>
-          <ShortcutBtn size="sm" shortcut="a" onClick={() => setShowAddModal(true)} className="shrink-0">
-            + Agregar
-          </ShortcutBtn>
+          <div className="flex gap-2 shrink-0">
+            <ShortcutBtn
+              size="sm"
+              onClick={async () => {
+                const text = buildCopyText(period);
+                try {
+                  await navigator.clipboard.writeText(text);
+                } catch {
+                  const el = document.createElement('textarea');
+                  el.value = text;
+                  document.body.appendChild(el);
+                  el.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(el);
+                }
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+            >
+              {copied ? '✓ Copiado' : '⎘ Copiar'}
+            </ShortcutBtn>
+            <ShortcutBtn size="sm" shortcut="a" onClick={() => setShowAddModal(true)}>
+              + Agregar
+            </ShortcutBtn>
+          </div>
         </div>
 
         {/* Summary — compact stat row */}
