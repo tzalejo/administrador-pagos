@@ -50,6 +50,7 @@ export class PeriodsService {
       category: t.category ?? null,
       status: 'pending',
       sortOrder: t.sortOrder ?? i,
+      dueDate: period.periodDate,
     }));
 
     period.entries = entries as any;
